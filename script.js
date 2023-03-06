@@ -57,6 +57,7 @@ class Cycling extends Workout {
 
 class App {
   #map;
+  #mapZoomLevel = 13;
   #mapEvent;
   #workouts = [];
 
@@ -64,6 +65,7 @@ class App {
     this._getPosition();
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
+    containerWorkouts.addEventListener('click', this._moveFocus.bind(this));
   }
   _getPosition() {
     if (navigator.geolocation) {
@@ -81,7 +83,7 @@ class App {
     const { longitude } = position.coords;
     console.log(`your current location : ${latitude}, ${longitude}`);
     const coords = [latitude, longitude];
-    this.#map = L.map('map').setView(coords, 13);
+    this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:
@@ -222,7 +224,7 @@ class App {
     }
 
     if (workout.type === 'cycling') {
-      html *= `
+      html += `
       <div class="workout__details">
         <span class="workout__icon">⚡️</span>
         <span class="workout__value">${workout.speed.toFixed(1)}</span>
@@ -236,6 +238,17 @@ class App {
     </li>`;
     }
     form.insertAdjacentHTML('afterend', html);
+  }
+
+  _moveFocus(e) {
+    const workoutEl = e.target.closest('.workout');
+    if (!workoutEl) return;
+    const id = workoutEl.getAttribute('data-id');
+    const selectedWorkout = this.#workouts.find(item => item.id === id);
+    this.#map.setView(selectedWorkout.coords, this.#mapZoomLevel, {
+      animate: true,
+      pan: { duration: 1 },
+    });
   }
 }
 
